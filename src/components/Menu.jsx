@@ -6,25 +6,31 @@ import { allCocktails } from "../../constants";
 export default function Menu() {
     const contentRef = useRef();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const isAnimating = useRef(false); // lock chống spam click/tap
 
     useGSAP(() => {
-        gsap.fromTo('#title', { opacity: 0 }, { opacity: 1, duration: 1 });
-        gsap.fromTo('.cocktail img', { opacity: 0, xPercent: -100 }, {
-            xPercent: 0, opacity: 1, duration: 1, ease: 'power1.inOut'
-        })
-        gsap.fromTo('.details h2', { yPercent: 100, opacity: 0 }, {
-            yPercent: 0, opacity: 100, ease: 'power1.inOut'
-        })
-        gsap.fromTo('.details p', { yPercent: 100, opacity: 0 }, {
-            yPercent: 0, opacity: 100, ease: 'power1.inOut'
-        })
+        const tl = gsap.timeline({
+            onStart: () => { isAnimating.current = true; },
+            onComplete: () => { isAnimating.current = false; },
+        });
+
+        tl.fromTo('#title', { opacity: 0 }, { opacity: 1, duration: 1, overwrite: true });
+        tl.fromTo('.cocktail img', { opacity: 0, xPercent: -100 }, {
+            xPercent: 0, opacity: 1, duration: 1, ease: 'power1.inOut', overwrite: true
+        }, '<');
+        tl.fromTo('.details h2', { yPercent: 100, opacity: 0 }, {
+            yPercent: 0, opacity: 1, ease: 'power1.inOut', overwrite: true
+        }, '<');
+        tl.fromTo('.details p', { yPercent: 100, opacity: 0 }, {
+            yPercent: 0, opacity: 1, ease: 'power1.inOut', overwrite: true
+        }, '<');
     }, [currentIndex]);
 
     const totalCocktails = allCocktails.length;
 
     const goToSlide = (index) => {
+        if (isAnimating.current) return; // chặn bấm khi đang animate
         const newIndex = (index + totalCocktails) % totalCocktails;
-
         setCurrentIndex(newIndex);
     }
 
@@ -50,11 +56,12 @@ export default function Menu() {
                     const isActive = index === currentIndex;
 
                     return (
-                        <button key={cocktail.id} className={`
-				${isActive
-                                ? 'text-white border-white'
-                                : 'text-white/50 border-white/50'}
-			 `} onClick={() => goToSlide(index)}
+                        <button
+                            key={cocktail.id}
+                            className={`touch-manipulation select-none ${
+                                isActive ? 'text-white border-white' : 'text-white/50 border-white/50'
+                            }`}
+                            onClick={() => goToSlide(index)}
                         >
                             {cocktail.name}
                         </button>
@@ -64,12 +71,12 @@ export default function Menu() {
 
             <div className="content">
                 <div className="arrows">
-                    <button className="text-left" onClick={() => goToSlide(currentIndex - 1)}>
+                    <button className="text-left touch-manipulation select-none" onClick={() => goToSlide(currentIndex - 1)}>
                         <span>{prevCocktail.name}</span>
                         <img src="/images/right-arrow.png" alt="right-arrow" aria-hidden="true" />
                     </button>
 
-                    <button className="text-left" onClick={() => goToSlide(currentIndex + 1)}>
+                    <button className="text-left touch-manipulation select-none" onClick={() => goToSlide(currentIndex + 1)}>
                         <span>{nextCocktail.name}</span>
                         <img src="/images/left-arrow.png" alt="left-arrow" aria-hidden="true" />
                     </button>
